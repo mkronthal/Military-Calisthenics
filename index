@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0c0f">
+<title>Military Calisthenics - Daily Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body,#root{height:100%}
+body{background:#0a0c0f;overflow-x:hidden}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes badgeIn{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.2) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes checkPop{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.exercise-card{animation:slideUp 0.4s ease both;transition:all 0.2s ease}
+.exercise-card:active{transform:scale(0.98)}
+.nav-btn{transition:all 0.15s ease}
+.nav-btn:active{transform:scale(0.92)}
+.finish-btn:active{transform:scale(0.96)}
+.player-btn:active{transform:scale(0.95)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+var h=React.createElement,useState=React.useState,useEffect=React.useEffect;
+var FIREBASE_CONFIG={apiKey:"AIzaSyCJJ2T3JYZr4_dpWdKjx744Azfa09LQ1Kw",authDomain:"military-calisthenics.firebaseapp.com",databaseURL:"https://military-calisthenics-default-rtdb.firebaseio.com",projectId:"military-calisthenics",storageBucket:"military-calisthenics.firebasestorage.app",messagingSenderId:"678625457619",appId:"1:678625457619:web:c6cd508cbbc3fb9e452b26"};
+var db=null,firebaseReady=false;
+try{firebase.initializeApp(FIREBASE_CONFIG);db=firebase.database();firebaseReady=FIREBASE_CONFIG.apiKey!=="YOUR_API_KEY";}catch(e){console.warn("Firebase offline",e);}
+var local={get:function(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+var FAMILY=[{id:"michael",name:"Michael",icon:"\u{1FA96}",color:"#e8622c"},{id:"cheri",name:"Cheri'",icon:"\u{1F4AA}",color:"#c54eb0"},{id:"kylie",name:"Kylie",icon:"\u26A1",color:"#4e9ee8"},{id:"kayla",name:"Kayla",icon:"\u{1F525}",color:"#e8c84e"},{id:"keegan",name:"Keegan",icon:"\u{1F985}",color:"#4ec578"},{id:"kaden",name:"Kaden",icon:"\u{1F3AF}",color:"#e85c4e"}];
+var EX={diamond_pushups:{name:"Diamond Push-Ups",target:"Arms",reps:15,cal:8,icon:"\u{1F48E}",desc:"Place hands together under your chest forming a diamond shape with thumbs and index fingers. Lower your chest to your hands, keeping elbows tight to your body. Push back up explosively. Engages triceps and inner chest intensely."},wide_pushups:{name:"Wide-Grip Push-Ups",target:"Arms",reps:20,cal:10,icon:"\u{1FAF8}",desc:"Set hands wider than shoulder-width, fingers angled slightly outward. Lower chest to the ground with controlled tempo (3 seconds down). Press up powerfully. Emphasizes chest and front deltoids."},tricep_dips:{name:"Tricep Dips",target:"Arms",reps:15,cal:7,icon:"\u{1FA91}",desc:"Place hands on a sturdy chair or bench behind you, fingers forward. Extend legs straight out. Lower your body by bending elbows to 90 degrees, keeping back close to the edge. Drive up through your palms. Pure tricep isolation."},pike_pushups:{name:"Pike Push-Ups",target:"Arms",reps:12,cal:9,icon:"\u26F0\uFE0F",desc:"Start in downward dog position with hips high, hands shoulder-width. Bend elbows and lower the crown of your head toward the floor. Press back up. Targets shoulders and upper arms like a military press without weights."},commando_planks:{name:"Commando Planks",target:"Arms",reps:20,cal:11,icon:"\u{1F396}\uFE0F",desc:"Start in a forearm plank. Push up to a full plank one arm at a time, then lower back down. That is one rep. Alternate leading arm each rep. Builds arm endurance and core stability simultaneously."},pseudo_planche:{name:"Pseudo Planche Push-Ups",target:"Arms",reps:10,cal:10,icon:"\u{1F938}",desc:"In push-up position, rotate hands so fingers point toward your feet. Lean forward past your hands, then lower and press. Extreme bicep and forearm engagement. A true military-grade arm builder."},flutter_kicks:{name:"Flutter Kicks",target:"Abs",reps:40,cal:10,icon:"\u{1F9B5}",desc:"Lie on your back, hands under your glutes. Lift both legs 6 inches off the ground. Alternate kicking legs up and down in small, rapid motions. Keep lower back pressed into the floor. Each kick equals 1 rep."},leg_raises:{name:"Floor Leg Raises",target:"Abs",reps:15,cal:8,icon:"\u{1F4D0}",desc:"Lie flat, arms at sides palms down. Keeping legs straight and together, raise them to 90 degrees then lower slowly. Stop 2 inches from the floor. Do not let your lower back arch. Destroys the lower abs."},mountain_climbers:{name:"Mountain Climbers",target:"Abs",reps:30,cal:14,icon:"\u{1F3D4}\uFE0F",desc:"High plank position, hands directly under shoulders. Drive one knee toward your chest, then explosively switch legs. Maintain a flat back and tight core. Each leg drive equals 1 rep. Speed is the weapon here."},russian_twists:{name:"Russian Twists",target:"Abs",reps:30,cal:9,icon:"\u{1F300}",desc:"Sit with knees bent, feet off the ground, torso leaned back 45 degrees. Clasp hands together. Rotate your torso to touch the ground on each side. Each side equals 1 rep. For intensity, straighten your legs."},plank_hold:{name:"Military Plank Hold",target:"Abs",reps:60,cal:6,icon:"\u{1F9F1}",desc:"Forearm plank: elbows under shoulders, body in a rigid line from head to heels. Squeeze glutes, brace core as if about to take a punch. Hold for 60 seconds. No sagging, no piking. Reps equal seconds."},v_ups:{name:"V-Ups",target:"Abs",reps:15,cal:10,icon:"\u270C\uFE0F",desc:"Lie flat, arms overhead. Simultaneously lift legs and torso, reaching hands to touch your toes at the top forming a V shape. Lower back down with control. Full range of motion is non-negotiable."},glute_bridges:{name:"Glute Bridges",target:"Butt",reps:25,cal:8,icon:"\u{1F309}",desc:"Lie on your back, feet flat, knees bent. Drive through your heels to lift hips until your body forms a straight line from shoulders to knees. Squeeze glutes hard at top for 2 seconds. Lower slowly."},donkey_kicks:{name:"Donkey Kicks",target:"Butt",reps:20,cal:7,icon:"\u{1FACF}",desc:"On all fours, hands under shoulders, knees under hips. Keeping knee bent at 90 degrees, drive one foot toward the ceiling until thigh is parallel with the floor. Squeeze glute at top. 20 reps each side."},fire_hydrants:{name:"Fire Hydrants",target:"Butt",reps:20,cal:7,icon:"\u{1F692}",desc:"On all fours, lift one knee out to the side, keeping it bent at 90 degrees, until thigh is parallel to the floor. Hold 1 second. Lower with control. 20 reps each side. Targets the gluteus medius."},single_leg_bridge:{name:"Single-Leg Glute Bridge",target:"Butt",reps:15,cal:9,icon:"\u{1F9A9}",desc:"Standard bridge position but extend one leg straight toward the ceiling. Drive through the planted heel, lifting hips high. Squeeze glute at top. 15 reps each leg. Brutal unilateral work."},sumo_pulse:{name:"Sumo Squat Pulses",target:"Butt",reps:25,cal:11,icon:"\u{1F3CB}\uFE0F",desc:"Wide stance, toes pointed out 45 degrees. Squat deep until thighs are parallel. Hold at the bottom and pulse with small 3-inch up-and-down movements. 25 pulses. The burn is the point."},curtsy_lunges:{name:"Curtsy Lunges",target:"Butt",reps:20,cal:10,icon:"\u{1F451}",desc:"Standing tall, step one foot behind and across your body as if curtsying. Lower until front thigh is parallel to the floor. Drive through the front heel to return. Alternate legs, 10 each side."},jump_squats:{name:"Jump Squats",target:"Legs",reps:15,cal:14,icon:"\u{1F680}",desc:"Feet shoulder-width, squat until thighs are parallel. Explode upward, leaving the ground. Land softly with bent knees and immediately descend into the next squat. Power and control in equal measure."},lunges:{name:"Walking Lunges",target:"Legs",reps:20,cal:12,icon:"\u{1F6B6}",desc:"Step forward into a deep lunge with both knees at 90 degrees, back knee hovering 1 inch off the ground. Drive through the front heel and step the back foot forward into the next lunge. 10 each leg."},wall_sit:{name:"Wall Sit",target:"Legs",reps:45,cal:6,icon:"\u{1F9F1}",desc:"Back flat against a wall, slide down until thighs are parallel to the floor, knees at 90 degrees. Arms at sides or crossed on chest. Hold for 45 seconds. No shifting, no rising. Reps equal seconds."},calf_raises:{name:"Single-Leg Calf Raises",target:"Legs",reps:25,cal:5,icon:"\u{1F9B6}",desc:"Stand on one foot on an elevated surface like a stair step. Lower heel below the edge, then rise to full tip-toe. Squeeze at the top for 1 second. 25 reps each leg. Slow and controlled."},squat_hold_march:{name:"Squat Hold March",target:"Legs",reps:30,cal:13,icon:"\u{1FA96}",desc:"Drop into a half-squat. Maintaining the squat position, march in place by lifting knees high. Each knee lift equals 1 rep. Keep your torso upright and core braced. Total quad domination."},pistol_squat_assist:{name:"Assisted Pistol Squats",target:"Legs",reps:10,cal:12,icon:"\u{1F52B}",desc:"Stand on one leg, extend the other forward. Hold a doorframe or chair for balance. Squat as deep as possible on one leg, then drive up. 10 each leg. The king of bodyweight leg exercises."}};
+var BADGES=[{id:"first_workout",name:"Enlisted",desc:"Complete your first workout",icon:"\u{1F396}\uFE0F",check:function(s){return s.tw>=1}},{id:"streak_3",name:"Three-Peat",desc:"3-day streak",icon:"\u{1F525}",check:function(s){return s.cs>=3}},{id:"streak_7",name:"Iron Week",desc:"7-day streak",icon:"\u26A1",check:function(s){return s.cs>=7}},{id:"streak_14",name:"Battle Hardened",desc:"14-day streak",icon:"\u{1F6E1}\uFE0F",check:function(s){return s.cs>=14}},{id:"streak_30",name:"War Machine",desc:"30-day streak",icon:"\u{1F480}",check:function(s){return s.cs>=30}},{id:"cal_500",name:"Furnace",desc:"Burn 500 total calories",icon:"\u{1F525}",check:function(s){return s.tc>=500}},{id:"cal_2000",name:"Inferno",desc:"Burn 2000 total calories",icon:"\u2604\uFE0F",check:function(s){return s.tc>=2000}},{id:"w10",name:"Sergeant",desc:"Complete 10 workouts",icon:"\u{1F397}\uFE0F",check:function(s){return s.tw>=10}},{id:"w25",name:"Lieutenant",desc:"Complete 25 workouts",icon:"\u2B50",check:function(s){return s.tw>=25}},{id:"w50",name:"Commander",desc:"Complete 50 workouts",icon:"\u{1F3C5}",check:function(s){return s.tw>=50}}];
+var QUOTES=["Pain is weakness leaving the body.","The only easy day was yesterday.","Sweat dries. Blood clots. Bones heal. Suck it up.","Don't count the days. Make the days count.","Discipline equals freedom.","Your body can handle almost anything. It's your mind you have to convince.","Fall down seven times, stand up eight.","The more you sweat in training, the less you bleed in combat.","Embrace the suck.","Victory belongs to the most persevering."];
+var TC={Arms:"#e8622c",Abs:"#4e9ee8",Butt:"#c54eb0",Legs:"#4ec578"};
+var DS={tw:0,tc:0,cs:0,ls:0,badges:[],cd:[],hist:[]};
+function getToday(){return new Date().toISOString().split("T")[0]}
+function getDW(ds){var seed=ds.split("-").join("")|0;var g={Arms:[],Abs:[],Butt:[],Legs:[]};Object.entries(EX).forEach(function(e){g[e[1].target].push(e[0])});function pick(a,n,s){var c=a.slice();for(var i=c.length-1;i>0;i--){var j=Math.abs(((s*(i+1)*9301+49297)%233280)%(i+1));var t=c[i];c[i]=c[j];c[j]=t}return c.slice(0,n)}return[].concat(pick(g.Arms,2,seed),pick(g.Abs,2,seed+1),pick(g.Butt,2,seed+2),pick(g.Legs,2,seed+3)).map(function(k){return{key:k,name:EX[k].name,target:EX[k].target,reps:EX[k].reps,cal:EX[k].cal,icon:EX[k].icon,desc:EX[k].desc}})}
+function fbSave(pid,stats){if(firebaseReady&&db)db.ref("players/"+pid+"/stats").set(stats)}
+function fbSaveDay(pid,d,c){if(firebaseReady&&db)db.ref("players/"+pid+"/days/"+d).set(c)}
+function App(){
+var _cp=useState(local.get("mil-cal-player")),curP=_cp[0],setCurP=_cp[1];
+var _st=useState(DS),stats=_st[0],setStats=_st[1];
+var _ap=useState({}),allPS=_ap[0],setAllPS=_ap[1];
+var today=getToday();
+var _co=useState({}),comp=_co[0],setComp=_co[1];
+var _vw=useState("workout"),view=_vw[0],setView=_vw[1];
+var _ex=useState(null),expEx=_ex[0],setExpEx=_ex[1];
+var _sc=useState(false),showComp=_sc[0],setShowComp=_sc[1];
+var _nb=useState(null),newBadge=_nb[0],setNewBadge=_nb[1];
+var _lt=useState("streak"),lbTab=_lt[0],setLbTab=_lt[1];
+var wo=getDW(today);
+var totalCal=wo.reduce(function(s,e){return s+e.cal},0);
+var compCt=Object.keys(comp).filter(function(k){return comp[k]}).length;
+var allDone=compCt===wo.length;
+var earnCal=wo.reduce(function(s,e){return s+(comp[e.key]?e.cal:0)},0);
+var dn=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var dow=dn[new Date().getDay()];
+var quote=QUOTES[new Date().getDate()%QUOTES.length];
+var todayDone=(stats.cd||[]).indexOf(today)>=0;
+var player=FAMILY.find(function(f){return f.id===curP});
+useEffect(function(){
+if(!curP)return;
+var ls=local.get("mil-s-"+curP);if(ls)setStats(ls);
+var ld=local.get("mil-d-"+curP+"-"+today);if(ld)setComp(ld);
+if(firebaseReady&&db){
+var r1=db.ref("players/"+curP+"/stats");
+var r2=db.ref("players/"+curP+"/days/"+today);
+var r3=db.ref("players");
+r1.on("value",function(s){var v=s.val();if(v){setStats(v);local.set("mil-s-"+curP,v)}});
+r2.on("value",function(s){var v=s.val();if(v){setComp(v);local.set("mil-d-"+curP+"-"+today,v)}});
+r3.on("value",function(s){var v=s.val();if(v){var a={};Object.entries(v).forEach(function(e){if(e[1].stats)a[e[0]]=e[1].stats});setAllPS(a)}});
+return function(){r1.off();r2.off();r3.off()};
+}},[curP,today]);
+function toggle(key){setComp(function(p){var n=Object.assign({},p);n[key]=!n[key];local.set("mil-d-"+curP+"-"+today,n);fbSaveDay(curP,today,n);return n})}
+function finish(){
+if(!allDone)return;
+if(todayDone){setShowComp(true);return}
+var yd=new Date(Date.now()-86400000).toISOString().split("T")[0];
+var wy=(stats.cd||[]).indexOf(yd)>=0;
+var ns=wy?stats.cs+1:1;
+var nst={tw:stats.tw+1,tc:stats.tc+totalCal,cs:ns,ls:Math.max(stats.ls||0,ns),badges:(stats.badges||[]).slice(),cd:(stats.cd||[]).concat([today]),hist:(stats.hist||[]).concat([{d:today,c:totalCal,e:wo.length}])};
+var nb=BADGES.filter(function(b){return b.check(nst)&&(stats.badges||[]).indexOf(b.id)<0});
+if(nb.length>0){nst.badges=nst.badges.concat(nb.map(function(b){return b.id}));setNewBadge(nb[0]);setTimeout(function(){setNewBadge(null)},3500)}
+setStats(nst);local.set("mil-s-"+curP,nst);fbSave(curP,nst);setShowComp(true)}
+function switchP(){setCurP(null);local.set("mil-cal-player",null);setComp({});setStats(DS);setView("workout")}
+function selP(id){setCurP(id);local.set("mil-cal-player",id)}
+function getLB(){return FAMILY.map(function(f){var s=allPS[f.id]||(f.id===curP?stats:DS);return Object.assign({},f,{stats:s})})}
+if(!curP){return h("div",{style:{minHeight:"100vh",background:"#0a0c0f",color:"#e8e6e1",fontFamily:"'DM Sans',sans-serif",maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30}},
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:11,letterSpacing:4,color:"#c5a44e",textTransform:"uppercase",fontWeight:600,marginBottom:4}},"Military Calisthenics"),
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:32,fontWeight:700,letterSpacing:2,color:"#f0ede6",marginBottom:6}},"DAILY OPS"),
+h("div",{style:{fontSize:13,color:"#5a5850",marginBottom:36}},"Who's reporting for duty?"),
+h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,width:"100%"}},
+FAMILY.map(function(f,i){return h("button",{key:f.id,className:"player-btn",onClick:function(){selP(f.id)},style:{background:"linear-gradient(135deg,#16181e,#111318)",border:"2px solid "+f.color+"33",borderRadius:14,padding:"20px 12px",cursor:"pointer",textAlign:"center",animation:"slideUp 0.4s ease both",animationDelay:(i*0.07)+"s"}},h("div",{style:{fontSize:36,marginBottom:8}},f.icon),h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:16,fontWeight:600,color:f.color,letterSpacing:1}},f.name))})),
+!firebaseReady&&h("div",{style:{marginTop:30,padding:"12px 16px",background:"#1a1610",border:"1px solid #33291a",borderRadius:10,fontSize:11,color:"#8b7840",lineHeight:1.5,textAlign:"center"}},"\u26A0\uFE0F Offline mode. Set up Firebase to sync across devices.")
+)}
+return h("div",{style:{minHeight:"100vh",background:"#0a0c0f",color:"#e8e6e1",fontFamily:"'DM Sans','Helvetica Neue',sans-serif",maxWidth:480,margin:"0 auto",position:"relative",overflow:"hidden",paddingBottom:40}},
+h("div",{style:{position:"relative",zIndex:1,background:"linear-gradient(135deg,#1a1e24,#0d1117)",borderBottom:"1px solid #c5a44e22",padding:"16px 20px 14px"}},
+h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
+h("div",null,h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:11,letterSpacing:4,color:"#c5a44e",textTransform:"uppercase",fontWeight:600}},"Military Calisthenics"),h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:24,fontWeight:700,letterSpacing:1,marginTop:2,color:"#f0ede6"}},"DAILY OPS")),
+h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:12,color:"#8b8878",fontWeight:500}},dow),h("div",{style:{display:"flex",alignItems:"center",gap:6,marginTop:2,justifyContent:"flex-end"}},h("span",{style:{fontSize:18}},"\u{1F525}"),h("span",{style:{fontFamily:"'Oswald',sans-serif",fontSize:26,fontWeight:700,color:stats.cs>0?"#e8622c":"#555"}},stats.cs)))),
+h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:10}},
+h("div",{style:{display:"flex",alignItems:"center",gap:8}},h("span",{style:{fontSize:18}},player.icon),h("span",{style:{fontFamily:"'Oswald',sans-serif",fontSize:14,fontWeight:600,color:player.color,letterSpacing:1}},player.name.toUpperCase())),
+h("button",{onClick:switchP,style:{background:"none",border:"1px solid #2a2825",borderRadius:6,padding:"4px 10px",color:"#5a5850",fontSize:10,fontFamily:"'Oswald',sans-serif",letterSpacing:1,cursor:"pointer"}},"SWITCH")),
+h("div",{style:{marginTop:8,fontSize:11,fontStyle:"italic",color:"#6b6860",letterSpacing:0.3,lineHeight:1.4}},'"'+quote+'"')),
+h("div",{style:{display:"flex",background:"#12141a",borderBottom:"1px solid #1e2028",position:"relative",zIndex:1}},
+[{key:"workout",label:"WORKOUT",icon:"\u2694\uFE0F"},{key:"leaderboard",label:"RANKS",icon:"\u{1F3C6}"},{key:"stats",label:"INTEL",icon:"\u{1F4CA}"},{key:"badges",label:"MEDALS",icon:"\u{1F3C5}"}].map(function(tab){return h("button",{key:tab.key,className:"nav-btn",onClick:function(){setView(tab.key)},style:{flex:1,padding:"11px 0",background:"none",border:"none",borderBottom:view===tab.key?"2px solid #c5a44e":"2px solid transparent",color:view===tab.key?"#c5a44e":"#5a5850",fontFamily:"'Oswald',sans-serif",fontSize:11,letterSpacing:1.5,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},h("span",{style:{fontSize:13}},tab.icon),tab.label)})),
+h("div",{style:{position:"relative",zIndex:1,padding:"0 0 60px"}},
+view==="workout"&&h("div",null,
+h("div",{style:{padding:"16px 20px 8px"}},
+h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},h("span",{style:{fontSize:12,color:"#8b8878",fontWeight:500}},compCt+"/"+wo.length+" exercises"),h("span",{style:{fontSize:12,color:"#c5a44e",fontWeight:500}},earnCal+"/"+totalCal+" cal")),
+h("div",{style:{height:6,background:"#1a1e24",borderRadius:3,overflow:"hidden"}},h("div",{style:{height:"100%",width:(compCt/wo.length*100)+"%",background:allDone?"linear-gradient(90deg,#c5a44e,#e8c84e)":"linear-gradient(90deg,#c5a44e,#8b7830)",borderRadius:3,transition:"width 0.4s ease"}})),
+h("div",{style:{fontSize:11,color:"#555",marginTop:6,textAlign:"center"}},"~15 min \u00B7 8 exercises \u00B7 Full body")),
+h("div",{style:{padding:"4px 16px"}},
+wo.map(function(ex,i){var done=comp[ex.key];var expanded=expEx===ex.key;var tc=TC[ex.target];var isTime=ex.key==="plank_hold"||ex.key==="wall_sit";
+return h("div",{key:ex.key,className:"exercise-card",style:{animationDelay:(i*0.06)+"s",marginBottom:10,background:done?"linear-gradient(135deg,#1a2418,#141a13)":"linear-gradient(135deg,#16181e,#111318)",border:"1px solid "+(done?"#2a4a2222":"#1e2028"),borderRadius:12,overflow:"hidden"}},
+h("div",{onClick:function(){setExpEx(expanded?null:ex.key)},style:{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}},
+h("div",{onClick:function(e){e.stopPropagation();toggle(ex.key)},style:{width:32,height:32,borderRadius:8,border:done?"none":"2px solid "+tc+"44",background:done?tc:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer",transition:"all 0.2s ease"}},done&&h("span",{style:{animation:"checkPop 0.3s ease",fontSize:16}},"\u2713")),
+h("div",{style:{flex:1,minWidth:0}},
+h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:3}},h("span",{style:{fontSize:15}},ex.icon),h("span",{style:{fontFamily:"'Oswald',sans-serif",fontSize:15,fontWeight:600,color:done?"#5a7a55":"#e0ddd5",textDecoration:done?"line-through":"none",letterSpacing:0.5}},ex.name)),
+h("div",{style:{display:"flex",alignItems:"center",gap:8}},h("span",{style:{fontSize:10,fontWeight:600,letterSpacing:1,color:tc,textTransform:"uppercase",fontFamily:"'Oswald',sans-serif"}},ex.target),h("span",{style:{color:"#333",fontSize:10}},"\u2022"),h("span",{style:{fontSize:11,color:"#6b6860"}},ex.reps+(isTime?" sec":" reps")),h("span",{style:{color:"#333",fontSize:10}},"\u2022"),h("span",{style:{fontSize:11,color:"#6b6860"}},ex.cal+" cal"))),
+h("span",{style:{fontSize:12,color:"#444",transform:expanded?"rotate(180deg)":"rotate(0)",transition:"transform 0.2s ease"}},"\u25BC")),
+expanded&&h("div",{style:{padding:"0 16px 14px 60px",animation:"slideUp 0.2s ease"}},h("p",{style:{fontSize:13,lineHeight:1.65,color:"#8b8878"}},ex.desc)))})),
+h("div",{style:{padding:"12px 16px 20px"}},h("button",{className:"finish-btn",onClick:finish,disabled:!allDone,style:{width:"100%",padding:16,borderRadius:12,border:"none",fontFamily:"'Oswald',sans-serif",fontSize:16,fontWeight:700,letterSpacing:3,cursor:allDone?"pointer":"default",color:todayDone?"#4ec578":allDone?"#0a0c0f":"#444",background:todayDone?"#1a3a1a":allDone?"linear-gradient(135deg,#c5a44e 0%,#e8c84e 50%,#c5a44e 100%)":"#1a1e24",backgroundSize:allDone&&!todayDone?"200% 100%":"auto",animation:allDone&&!todayDone?"shimmer 2s linear infinite":"none"}},todayDone?"\u2713 MISSION COMPLETE":allDone?"COMPLETE MISSION":(wo.length-compCt)+" EXERCISES REMAINING"))),
+view==="leaderboard"&&h("div",{style:{padding:20}},
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:18,fontWeight:600,letterSpacing:2,color:"#c5a44e",marginBottom:4}},"FAMILY RANKS"),
+h("div",{style:{fontSize:12,color:"#5a5850",marginBottom:16}},"Who's the toughest?"),
+h("div",{style:{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}},
+[{key:"streak",label:"\u{1F525} Streak"},{key:"workouts",label:"\u2694\uFE0F Total Ops"},{key:"calories",label:"\u2604\uFE0F Calories"},{key:"badges",label:"\u{1F3C5} Medals"}].map(function(t){return h("button",{key:t.key,onClick:function(){setLbTab(t.key)},style:{background:lbTab===t.key?"#c5a44e22":"#16181e",border:"1px solid "+(lbTab===t.key?"#c5a44e44":"#1e2028"),borderRadius:8,padding:"6px 12px",fontSize:12,color:lbTab===t.key?"#c5a44e":"#5a5850",fontFamily:"'DM Sans',sans-serif",fontWeight:500,cursor:"pointer"}},t.label)})),
+(function(){var board=getLB();var fns={streak:function(s){return s.stats.cs||0},workouts:function(s){return s.stats.tw||0},calories:function(s){return s.stats.tc||0},badges:function(s){return(s.stats.badges||[]).length}};var sf=fns[lbTab];var sorted=board.slice().sort(function(a,b){return sf(b)-sf(a)});var medals=["\u{1F947}","\u{1F948}","\u{1F949}"];var lm={streak:"day streak",workouts:"workouts",calories:"calories",badges:"medals"};
+return h("div",null,
+sorted.map(function(p,i){var val=sf(p);var isMe=p.id===curP;return h("div",{key:p.id,style:{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",marginBottom:8,background:isMe?"linear-gradient(135deg,#1a1c14,#16180f)":"linear-gradient(135deg,#16181e,#111318)",border:"1px solid "+(isMe?p.color+"33":"#1e2028"),borderRadius:12,animation:"slideUp 0.4s ease both",animationDelay:(i*0.06)+"s"}},
+h("div",{style:{width:30,textAlign:"center",fontSize:i<3?22:16,fontFamily:"'Oswald',sans-serif",fontWeight:700,color:"#555"}},i<3?medals[i]:(i+1)),
+h("div",{style:{fontSize:24}},p.icon),
+h("div",{style:{flex:1}},h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:15,fontWeight:600,color:isMe?p.color:"#e0ddd5",letterSpacing:0.5}},p.name+(isMe?" (you)":"")),h("div",{style:{fontSize:11,color:"#6b6860",marginTop:2}},val+" "+lm[lbTab])),
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:24,fontWeight:700,color:i===0?"#c5a44e":i===1?"#a0a0a0":i===2?"#a0724e":"#444"}},val))}),
+h("div",{style:{marginTop:24,background:"linear-gradient(135deg,#1a1810,#14120c)",border:"1px solid #c5a44e22",borderRadius:14,padding:18,textAlign:"center"}},
+h("div",{style:{fontSize:20,marginBottom:6}},"\u{1F3C1}"),
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:13,letterSpacing:2,color:"#c5a44e",fontWeight:600,marginBottom:4}},"WEEKLY CHALLENGE"),
+h("div",{style:{fontSize:13,color:"#8b8878",lineHeight:1.5}},"Most workouts this week wins!"),
+h("div",{style:{display:"flex",justifyContent:"center",gap:16,marginTop:14,flexWrap:"wrap"}},
+(function(){var now=new Date();var di=(now.getDay()+6)%7;var wd=[];for(var i=0;i<=di;i++){var d=new Date(now);d.setDate(now.getDate()-(di-i));wd.push(d.toISOString().split("T")[0])}return getLB().map(function(p){var wc=wd.filter(function(d){return(p.stats.cd||[]).indexOf(d)>=0}).length;return h("div",{key:p.id,style:{textAlign:"center"}},h("div",{style:{fontSize:20}},p.icon),h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:18,fontWeight:700,color:p.color,marginTop:2}},wc),h("div",{style:{fontSize:9,color:"#555",fontFamily:"'Oswald',sans-serif",letterSpacing:1}},p.name.split("'")[0]))})})())),
+h("div",{style:{marginTop:16,background:"linear-gradient(135deg,#16181e,#111318)",border:"1px solid #1e2028",borderRadius:12,padding:16}},
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:12,letterSpacing:2,color:"#8b8878",fontWeight:600,marginBottom:12}},"TODAY'S STATUS"),
+h("div",{style:{display:"flex",justifyContent:"space-around",flexWrap:"wrap",gap:8}},getLB().map(function(p){var dt=(p.stats.cd||[]).indexOf(today)>=0;return h("div",{key:p.id,style:{textAlign:"center",opacity:dt?1:0.35}},h("div",{style:{fontSize:22}},p.icon),h("div",{style:{fontSize:12,marginTop:4}},dt?"\u2705":"\u2B1C"))})))
+)})()),
+view==="stats"&&h("div",{style:{padding:20}},
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:18,fontWeight:600,letterSpacing:2,color:"#c5a44e",marginBottom:16}},"MISSION INTEL"),
+h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}},
+[{label:"TOTAL OPS",value:stats.tw,icon:"\u2694\uFE0F",color:"#c5a44e"},{label:"CALORIES",value:stats.tc,icon:"\u{1F525}",color:"#e8622c"},{label:"STREAK",value:stats.cs,icon:"\u{1F4C8}",color:"#4ec578"},{label:"BEST STREAK",value:stats.ls||0,icon:"\u{1F3C6}",color:"#e8c84e"}].map(function(s,i){return h("div",{key:i,style:{background:"linear-gradient(135deg,#16181e,#111318)",border:"1px solid #1e2028",borderRadius:12,padding:"16px 14px",animation:"slideUp 0.4s ease both",animationDelay:(i*0.08)+"s"}},h("div",{style:{fontSize:20,marginBottom:6}},s.icon),h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:30,fontWeight:700,color:s.color}},s.value),h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:10,letterSpacing:2,color:"#5a5850",fontWeight:600,marginTop:2}},s.label))})),
+h("div",{style:{background:"linear-gradient(135deg,#16181e,#111318)",border:"1px solid #1e2028",borderRadius:12,padding:16,marginBottom:20}},
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:12,letterSpacing:2,color:"#8b8878",fontWeight:600,marginBottom:12}},"THIS WEEK"),
+h("div",{style:{display:"flex",justifyContent:"space-between"}},["M","T","W","T","F","S","S"].map(function(d,i){var date=new Date();var di=(date.getDay()+6)%7;var diff=i-di;var tgt=new Date(date);tgt.setDate(date.getDate()+diff);var ds=tgt.toISOString().split("T")[0];var done=(stats.cd||[]).indexOf(ds)>=0;var isT=ds===today;return h("div",{key:i,style:{textAlign:"center"}},h("div",{style:{fontSize:10,color:"#555",marginBottom:6,fontFamily:"'Oswald',sans-serif",letterSpacing:1}},d),h("div",{style:{width:36,height:36,borderRadius:8,background:done?"#c5a44e":isT?"#1e2028":"transparent",border:isT&&!done?"2px solid #c5a44e44":"2px solid transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:done?"#0a0c0f":"#555"}},done?"\u2713":isT?"\u2022":""))}))),
+(stats.hist||[]).length>0&&h("div",null,h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:12,letterSpacing:2,color:"#8b8878",fontWeight:600,marginBottom:10}},"RECENT OPS"),(stats.hist||[]).slice(-7).reverse().map(function(r,i){return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #1a1e24"}},h("span",{style:{fontSize:13,color:"#6b6860"}},r.d),h("div",{style:{display:"flex",gap:12}},h("span",{style:{fontSize:12,color:"#4ec578"}},r.e+" ex"),h("span",{style:{fontSize:12,color:"#e8622c"}},r.c+" cal")))}))),
+view==="badges"&&h("div",{style:{padding:20}},
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:18,fontWeight:600,letterSpacing:2,color:"#c5a44e",marginBottom:4}},"MEDALS OF HONOR"),
+h("div",{style:{fontSize:12,color:"#5a5850",marginBottom:20}},(stats.badges||[]).length+"/"+BADGES.length+" earned"),
+h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},BADGES.map(function(b,i){var earned=(stats.badges||[]).indexOf(b.id)>=0;return h("div",{key:b.id,style:{background:earned?"linear-gradient(135deg,#1e1c14,#18160f)":"linear-gradient(135deg,#131517,#0e1012)",border:"1px solid "+(earned?"#c5a44e33":"#1a1c20"),borderRadius:12,padding:16,textAlign:"center",opacity:earned?1:0.4,animation:"slideUp 0.4s ease both",animationDelay:(i*0.05)+"s"}},h("div",{style:{fontSize:32,marginBottom:8}},earned?b.icon:"\u{1F512}"),h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:13,fontWeight:600,letterSpacing:1,color:earned?"#c5a44e":"#444",marginBottom:4}},b.name),h("div",{style:{fontSize:11,color:earned?"#6b6860":"#333",lineHeight:1.4}},b.desc))})))),
+showComp&&h("div",{onClick:function(){setShowComp(false)},style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,animation:"slideUp 0.3s ease"}},
+h("div",{style:{background:"linear-gradient(135deg,#1a1e24,#111318)",border:"1px solid #c5a44e33",borderRadius:20,padding:"40px 30px",textAlign:"center",maxWidth:320,width:"90%"}},
+h("div",{style:{fontSize:50,marginBottom:12}},"\u2694\uFE0F"),
+h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:24,fontWeight:700,letterSpacing:2,color:"#c5a44e",marginBottom:8}},"MISSION COMPLETE"),
+h("div",{style:{fontSize:14,color:"#8b8878",lineHeight:1.6}},player.name+" burned "+totalCal+" calories",h("br"),"Streak: "+stats.cs+" days"),
+h("div",{style:{marginTop:20,fontSize:12,color:"#5a5850"}},"Tap anywhere to dismiss"))),
+newBadge&&h("div",{style:{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#2a2410,#1a1808)",border:"1px solid #c5a44e66",borderRadius:14,padding:"14px 20px",display:"flex",alignItems:"center",gap:12,zIndex:200,animation:"badgeIn 0.5s ease",boxShadow:"0 8px 30px rgba(197,164,78,0.15)",maxWidth:"90%"}},
+h("span",{style:{fontSize:28,animation:"pulse 1s ease infinite"}},newBadge.icon),
+h("div",null,h("div",{style:{fontFamily:"'Oswald',sans-serif",fontSize:11,letterSpacing:2,color:"#c5a44e",fontWeight:600}},"NEW MEDAL"),h("div",{style:{fontSize:14,fontWeight:700,color:"#e0ddd5"}},newBadge.name)))
+)}
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+</script>
+</body>
+</html>
