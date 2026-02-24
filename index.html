@@ -43,7 +43,7 @@ var BADGES=[{id:"first_workout",name:"Enlisted",desc:"Complete your first workou
 var QUOTES=["Pain is weakness leaving the body.","The only easy day was yesterday.","Sweat dries. Blood clots. Bones heal. Suck it up.","Don't count the days. Make the days count.","Discipline equals freedom.","Your body can handle almost anything. It's your mind you have to convince.","Fall down seven times, stand up eight.","The more you sweat in training, the less you bleed in combat.","Embrace the suck.","Victory belongs to the most persevering."];
 var TC={Arms:"#e8622c",Abs:"#4e9ee8",Butt:"#c54eb0",Legs:"#4ec578"};
 var DS={tw:0,tc:0,cs:0,ls:0,badges:[],cd:[],hist:[]};
-function getToday(){return new Date().toISOString().split("T")[0]}
+function getToday(){return new Date().toLocaleDateString("en-CA",{timeZone:"America/Los_Angeles"})}
 function hashStr(str){var h=0;for(var i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h=h&h}return Math.abs(h)}
 function getDW(ds){var g={Arms:[],Abs:[],Butt:[],Legs:[]};Object.entries(EX).forEach(function(e){g[e[1].target].push(e[0])});function pick(a,n,tag){var hash=hashStr(ds+tag);var c=a.slice();for(var i=c.length-1;i>0;i--){hash=((hash*16807)%2147483647);var j=hash%(i+1);var t=c[i];c[i]=c[j];c[j]=t}return c.slice(0,n)}return[].concat(pick(g.Arms,2,"arms"),pick(g.Abs,2,"abs"),pick(g.Butt,2,"butt"),pick(g.Legs,2,"legs")).map(function(k){return{key:k,name:EX[k].name,target:EX[k].target,reps:EX[k].reps,cal:EX[k].cal,icon:EX[k].icon,desc:EX[k].desc}})}
 function fbSave(pid,stats){if(firebaseReady&&db)db.ref("players/"+pid+"/stats").set(stats)}
